@@ -8,38 +8,33 @@ int pinB = 5;
 int pinC = 6;
 int pinCprime = 7;
 volatile int timer = 0;//timer in milliseconds
-volatile int buff[7]; //buffer to hold 8 bits of data
-volatile bool flag = 0;
-volatile int x = 0;
-char bin[7];
+volatile char buff[8]; //buffer to hold 8 bits of data
+volatile int x = 0; //buffer placeholder
 
-
-void parseBuffer();
-void binaryToDecimal(char *binary, int length);
+unsigned long binaryToDecimal(char *binary, int length);
 
 void isr() { //interrupt service routine triggered on Falling edge of signal
 noInterrupts();
-if(timer <= 16 || timer >= 12){ //start bit
-  flag = 1; //start filling the buffer
+if(timer < 15 && timer > 11){
+  Serial.println("START");
+}
+else if(timer <= 1){
+  //buff[x] = "0";
+  Serial.println(0);
+  //x++;
+}
+else if(timer > 1 && timer < 4){
+  //buff[x] = "1";
+  Serial.println(1);
+  //x++;
 }
 else{
-if(flag) {
-  buff[x] = timer;
+  Serial.println("STOP");
+  //Serial.println(binaryToDecimal(buff, 8));
+  //x = 0; //reset buffer position
 }
-if(x == 7) {
-  x = 0;
-  Serial.println("got here!");
-  parseBuffer();
-  flag = 0;//reset all values when buffer is full
-  timer = 0;
-}
-}
-//Serial.println(timer);
+timer = 0; //reset timer
 interrupts();
-digitalWrite(pinA, LOW);
-digitalWrite(pinB, LOW);
-digitalWrite(pinCprime, LOW);
-digitalWrite(pinC, LOW);
 }
 
 void callback(){
@@ -58,26 +53,9 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(dataPin), isr, FALLING); //attaches interrupt to data coming from circuit
 }
 
-void loop() {
-  //Serial.print(digitalRead(3));
-  //timer++;
-}
+void loop() {}
 
-void parseBuffer(){
-noInterrupts();
-for(x;x<7;x++){
-  if(buff[x] <= 1){
-    bin[x] = 0;
-  }
-  else{
-    bin[x] = 1;
-  }
-}
-binaryToDecimal(bin, 8);
-interrupts();
-}
-
-void binaryToDecimal(char *binary, int length) {
+unsigned long binaryToDecimal(char *binary, int length) {
     int i;
     unsigned long decimal = 0;
     unsigned long weight = 1;
@@ -89,25 +67,5 @@ void binaryToDecimal(char *binary, int length) {
             decimal += weight;
         weight *= 2;
     }
-    //char led;
-    if (decimal == 162){
-      //led = "A";
-      Serial.println("A");
-      digitalWrite(pinA, HIGH);
-    }
-    else if(decimal == 42){
-      //led = "B";
-            Serial.println("B");
-      digitalWrite(pinB, HIGH);
-    }
-    else if(decimal == 52){
-      //led = "Cprime";
-      Serial.println("Cprime");
-      digitalWrite(pinCprime, HIGH);
-    }
-    else{
-      //led = "C";
-      Serial.println("C");
-      digitalWrite(pinC, HIGH);
-    }
+    return decimal;
 }
