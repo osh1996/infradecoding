@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include <TimerOne.h> // make sure to install this library to run!!
 #include <stdio.h>
+#include <CircularBuffer.h> //same with this library!
+#define CIRCULAR_BUFFER_INT_SAFE
 
 int dataPin = 3; //input from sensor
 int pinA = 4;
@@ -8,37 +10,35 @@ int pinB = 5;
 int pinC = 6;
 int pinCprime = 7;
 volatile int timer = 0;//timer in milliseconds
-volatile char buff[8]; //buffer to hold 8 bits of data
-volatile int x = 0; //buffer placeholder
+CircularBuffer <int, 7> buffer;
+int total = 0;
 
+void BD(CircularBuffer<int, 7> buffr);
 unsigned long binaryToDecimal(char *binary, int length);
 
 void isr() { //interrupt service routine triggered on Falling edge of signal
-noInterrupts();
-if(timer < 15 && timer > 11){
-  Serial.println("START");
-}
-else if(timer <= 1){
-  //buff[x] = "0";
-  Serial.println(0);
-  //x++;
-}
-else if(timer > 1 && timer < 4){
-  //buff[x] = "1";
-  Serial.println(1);
-  //x++;
-}
-else{
-  Serial.println("STOP");
-  //Serial.println(binaryToDecimal(buff, 8));
-  //x = 0; //reset buffer position
-}
-timer = 0; //reset timer
-interrupts();
+  noInterrupts();
+
+  if(timer < 15 && timer > 11){
+    //Serial.println("START");
+  }
+  else if(timer <= 1){
+    buffer.unshift(0);
+    //Serial.println(0);
+  }
+  else if(timer > 1 && timer < 4){
+    buffer.unshift(1);
+    //Serial.println(1);
+  }
+  else{
+    //Serial.println("STOP");
+  }
+  timer = 0; //reset timer
+  interrupts();
 }
 
 void callback(){
-timer++;//current time in milliseconds
+  timer++;//current time in milliseconds
 }
 
 void setup() {
@@ -53,19 +53,31 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(dataPin), isr, FALLING); //attaches interrupt to data coming from circuit
 }
 
-void loop() {}
+void loop() {
+  BD(buffer);
+  if(total == 162){
+    Serial.println("A");
+  }
+  else if(total == 42){
+    Serial.println("B");
+  }
+  else if(total == 52){
+    Serial.println("C");
+  }
+  else if(total == 67){
+    Serial.println("Cprime");
+  }
+  total = 0;
+}
 
-unsigned long binaryToDecimal(char *binary, int length) {
-    int i;
-    unsigned long decimal = 0;
-    unsigned long weight = 1;
-    binary += length - 1;
-    weight = 1;
-    for(i = 0; i < length; ++i, --binary)
-    {
-        if(*binary == "1")
-            decimal += weight;
-        weight *= 2;
-    }
-    return decimal;
+void BD(CircularBuffer<int, 7> buffr){
+  total += buffr[7] * 128;
+  total += buffr[6] * 64;
+  total += buffr[5] * 32;
+  total += buffr[4] * 16;
+  total += buffr[3] * 8;
+  total += buffr[2] * 4;
+  total += buffr[1] * 2;
+  total += buffr[0];
+  buffr.pop();
 }
