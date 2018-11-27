@@ -3,6 +3,10 @@
 #include <stdio.h>
 #include <CircularBuffer.h> //same with this library!
 #define CIRCULAR_BUFFER_INT_SAFE
+#define decA 161
+#define decB 42
+#define decC 52
+#define decCprime 66
 
 int dataPin = 3; //input from sensor
 int pinA = 4;
@@ -12,6 +16,7 @@ int pinCprime = 7;
 volatile int timer = 0;//timer in milliseconds
 CircularBuffer <int, 7> buffer;
 int total = 0;
+bool flag = false;
 
 void BD(CircularBuffer<int, 7> buffr);
 unsigned long binaryToDecimal(char *binary, int length);
@@ -54,20 +59,33 @@ void setup() {
 }
 
 void loop() {
-  BD(buffer);
-  if(total == 162){
+  if(flag){
+    BD(buffer);
+    digitalWrite(pinA, LOW);
+    digitalWrite(pinB, LOW);
+    digitalWrite(pinC, LOW);
+    digitalWrite(pinCprime, LOW);
+  }
+
+  if(total == decA){
     Serial.println("A");
+    digitalWrite(pinA, HIGH);
   }
-  else if(total == 42){
+  else if(total == decB){
     Serial.println("B");
+    digitalWrite(pinB, HIGH);
   }
-  else if(total == 52){
+  else if(total == decC){
     Serial.println("C");
+    digitalWrite(pinC, HIGH);
   }
-  else if(total == 67){
+  else if(total == decCprime){
     Serial.println("Cprime");
+    digitalWrite(pinCprime, HIGH);
   }
+  //Serial.println(total);
   total = 0;
+  flag = !flag;
 }
 
 void BD(CircularBuffer<int, 7> buffr){
