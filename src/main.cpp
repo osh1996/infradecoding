@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <TimerOne.h> // make sure to install this library to run!!
 #include <stdio.h>
-#include <CircularBuffer.h> //same with this library!
+#include <CircularBuffer.h> //same with this library! https://github.com/rlogiacco/CircularBuffer
 #define CIRCULAR_BUFFER_INT_SAFE
 #define decA 161
 #define decB 42
